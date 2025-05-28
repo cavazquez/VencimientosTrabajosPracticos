@@ -29,11 +29,49 @@
     </form>
 
     <div id="resultado" class="mt-6 text-center text-lg font-medium text-gray-700 hidden"></div>
+    <div id="error" class="mt-4 text-red-600 font-semibold text-center hidden"></div>
   </div>
 
   <script>
+    function nombreMes(mes) {
+      const nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      return nombres[mes - 1];
+    }
+
+    function calcularVencimiento(anio, cuatrimestre, fechaActual = new Date()) {
+      const vencimientoAnio = anio + 4;
+      let vencimientoMes, complementariaMes;
+
+      if (cuatrimestre === '2') {
+        vencimientoMes = 7; // Julio
+        complementariaMes = 8; // Agosto → complemento en Septiembre
+      } else {
+        vencimientoMes = 2; // Febrero
+        complementariaMes = 3; // Marzo → complemento en Abril
+      }
+
+      const vencimientoFecha = new Date(vencimientoAnio, vencimientoMes - 1); // no se usa para vencida
+      const complementariaFecha = new Date(vencimientoAnio, complementariaMes); // vencimiento real
+
+      const vencida = fechaActual > complementariaFecha;
+
+      return {
+        vencimiento: `${nombreMes(vencimientoMes)}/Marzo de ${vencimientoAnio}`,
+        complementaria: `${nombreMes(complementariaMes + 1)} de ${vencimientoAnio}`,
+        aclaracion: 'Depende de la aprobación del CD para ese año. Consultar en el Depto. de Estudiantes (Pab. 2).',
+        vencida
+      };
+    }
+
+    function validarAnio(anio) {
+      const anioActual = new Date().getFullYear();
+      return anio >= anioActual - 100 && anio <= anioActual + 100;
+    }
+
     const form = document.getElementById('formulario');
     const resultado = document.getElementById('resultado');
+    const error = document.getElementById('error');
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -41,24 +79,91 @@
       const anio = parseInt(document.getElementById('anio').value);
       const cuatrimestre = document.getElementById('cuatrimestre').value;
 
-      let vencimientoAnio = anio + 4;
-      let vencimientoTexto, fechaComplementaria;
-
-      if (cuatrimestre === '2') {
-        vencimientoTexto = `Vence en Julio/Agosto de ${vencimientoAnio}`;
-        fechaComplementaria = `Fecha complementaria: Septiembre de ${vencimientoAnio}`;
-      } else {
-        vencimientoTexto = `Vence en Febrero/Marzo de ${vencimientoAnio}`;
-        fechaComplementaria = `Fecha complementaria: Abril de ${vencimientoAnio}`;
+      if (!validarAnio(anio)) {
+        error.textContent = "El año ingresado no es válido. Debe estar dentro de los últimos 100 años.";
+        error.classList.remove("hidden");
+        resultado.classList.add("hidden");
+        return;
       }
 
+      error.classList.add("hidden");
+
+      const datos = calcularVencimiento(anio, cuatrimestre);
+
       resultado.innerHTML = `
-        ${vencimientoTexto}<br>
-        ${fechaComplementaria}<br>
-        <span class="text-sm text-gray-500">(*) Depende de la aprobación del CD para ese año. Consultar en el Depto. de Estudiantes (Pab. 2).</span>
+        Vence en ${datos.vencimiento}<br>
+        Fecha complementaria: ${datos.complementaria}<br>
+        <span class="text-sm text-gray-500">(*) ${datos.aclaracion}</span><br>
+        ${datos.vencida ? `<span class="text-red-600 font-semibold">⚠️ Esta materia ya está vencida.</span>` :
+                          `<span class="text-green-600 font-semibold">✅ Esta materia aún está vigente.</span>`}
       `;
       resultado.classList.remove('hidden');
     });
+
+    // -------------------------
+    // ✅ Tests unitarios
+    // -------------------------
+    function testCalcularVencimiento() {
+      const test = (cond, msg) => { if (!cond) throw new Error("❌ " + msg); };
+
+      const f = (anio, cuatrim, hoy) => calcularVencimiento(anio, cuatrim, hoy);
+
+      const casos = [
+        {
+          anio: 2018,
+          cuatrim: '1',
+          fechaActual: new Date(2022, 3), // Abril 2022 → vencida
+          esperado: { vencida: true, vencimiento: 'Febrero/Marzo de 2022', complementaria: 'Abril de 2022' }
+        },
+        {
+          anio: 2020,
+          cuatrim: '2',
+          fechaActual: new Date(2024, 7), // Agosto 2024 → antes de complementaria (Septiembre 2024)
+          esperado: { vencida: false }
+        },
+        {
+          anio: 2020,
+          cuatrim: '2',
+          fechaActual: new Date(2024, 8), // Septiembre 2024 → vencida
+          esperado: { vencida: true }
+        },
+        {
+          anio: 2023,
+          cuatrim: 'verano',
+          fechaActual: new Date(2027, 2), // Marzo 2027 → aún vigente
+          esperado: { vencida: false }
+        },
+        {
+          anio: 2023,
+          cuatrim: 'verano',
+          fechaActual: new Date(2027, 3), // Abril 2027 → vencida
+          esperado: { vencida: true }
+        }
+      ];
+
+      for (const { anio, cuatrim, fechaActual, esperado } of casos) {
+        const res = f(anio, cuatrim, fechaActual);
+        test(res.vencida === esperado.vencida, `Error vencida para ${anio}/${cuatrim}`);
+        if (esperado.vencimiento) {
+          test(res.vencimiento === esperado.vencimiento, `Error vencimiento ${res.vencimiento}`);
+        }
+        if (esperado.complementaria) {
+          test(res.complementaria === esperado.complementaria, `Error complementaria ${res.complementaria}`);
+        }
+      }
+
+      // Validaciones de rango
+      const anioActual = new Date().getFullYear();
+      test(validarAnio(anioActual - 99) === true, "Error en validación año inferior válido");
+      test(validarAnio(anioActual + 99) === true, "Error en validación año superior válido");
+      test(validarAnio(anioActual - 101) === false, "Error en validación año inferior fuera de rango");
+      test(validarAnio(anioActual + 101) === false, "Error en validación año superior fuera de rango");
+      test(validarAnio(-5) === false, "Error en validación de año negativo");
+
+      console.log("✅ Todos los tests pasaron correctamente");
+    }
+
+    testCalcularVencimiento();
   </script>
 </body>
 </html>
