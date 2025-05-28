@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vencimiento de Exámenes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-xl rounded-2xl p-6 max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-4 text-center">Calculadora de Vencimiento</h1>
+
+    <form id="formulario" class="space-y-4">
+      <div>
+        <label for="anio" class="block text-sm font-medium">Año de aprobación</label>
+        <input type="number" id="anio" class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" required>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Cuatrimestre</label>
+        <select id="cuatrimestre" class="w-full border border-gray-300 rounded px-3 py-2">
+          <option value="verano">Verano</option>
+          <option value="1">1º Cuatrimestre</option>
+          <option value="2">2º Cuatrimestre</option>
+        </select>
+      </div>
+
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Calcular vencimiento</button>
+    </form>
+
+    <div id="resultado" class="mt-6 text-center text-lg font-medium text-gray-700 hidden"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('formulario');
+    const resultado = document.getElementById('resultado');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const anio = parseInt(document.getElementById('anio').value);
+      const cuatrimestre = document.getElementById('cuatrimestre').value;
+
+      let vencimientoAnio = anio + 4;
+      let vencimientoTexto, fechaComplementaria;
+
+      if (cuatrimestre === '2') {
+        vencimientoTexto = `Vence en Julio/Agosto de ${vencimientoAnio}`;
+        fechaComplementaria = `Fecha complementaria: Septiembre de ${vencimientoAnio}`;
+      } else {
+        vencimientoTexto = `Vence en Febrero/Marzo de ${vencimientoAnio}`;
+        fechaComplementaria = `Fecha complementaria: Abril de ${vencimientoAnio}`;
+      }
+
+      resultado.innerHTML = `
+        ${vencimientoTexto}<br>
+        ${fechaComplementaria}<br>
+        <span class="text-sm text-gray-500">(*) Depende de la aprobación del CD para ese año. Consultar en el Depto. de Estudiantes (Pab. 2).</span>
+      `;
+      resultado.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
