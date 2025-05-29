@@ -45,20 +45,20 @@
 
       if (cuatrimestre === '2') {
         vencimientoMes = 7; // Julio
-        complementariaMes = 8; // Agosto → complemento en Septiembre
+        complementariaMes = 9; // Septiembre
       } else {
         vencimientoMes = 2; // Febrero
-        complementariaMes = 3; // Marzo → complemento en Abril
+        complementariaMes = 4; // Abril
       }
 
       const vencimientoFecha = new Date(vencimientoAnio, vencimientoMes - 1); // no se usa para vencida
-      const complementariaFecha = new Date(vencimientoAnio, complementariaMes); // vencimiento real
+      const complementariaFecha = new Date(vencimientoAnio, complementariaMes - 1); // vencimiento real
 
       const vencida = fechaActual > complementariaFecha;
 
       return {
-        vencimiento: `${nombreMes(vencimientoMes)}/Marzo de ${vencimientoAnio}`,
-        complementaria: `${nombreMes(complementariaMes + 1)} de ${vencimientoAnio}`,
+        vencimiento: `${nombreMes(vencimientoMes)}/${nombreMes(vencimientoMes+1)} de ${vencimientoAnio}`,
+        complementaria: `${nombreMes(complementariaMes)} de ${vencimientoAnio}`,
         aclaracion: 'Depende de la aprobación del CD para ese año. Consultar en el Depto. de Estudiantes (Pab. 2).',
         vencida
       };
@@ -112,32 +112,32 @@
         {
           anio: 2018,
           cuatrim: '1',
-          fechaActual: new Date(2022, 3), // Abril 2022 → vencida
+          fechaActual: new Date(2022, 4), // Abril 2022 → vencida
           esperado: { vencida: true, vencimiento: 'Febrero/Marzo de 2022', complementaria: 'Abril de 2022' }
         },
         {
           anio: 2020,
           cuatrim: '2',
           fechaActual: new Date(2024, 7), // Agosto 2024 → antes de complementaria (Septiembre 2024)
-          esperado: { vencida: false }
+          esperado: { vencida: false, vencimiento: 'Julio/Agosto de 2024', complementaria: 'Septiembre de 2024' }
         },
         {
           anio: 2020,
           cuatrim: '2',
-          fechaActual: new Date(2024, 8), // Septiembre 2024 → vencida
-          esperado: { vencida: true }
+          fechaActual: new Date(2024, 8), // Septiembre 2024 → en complementaria
+          esperado: { vencida: false, vencimiento: 'Julio/Agosto de 2024', complementaria: 'Septiembre de 2024' }
         },
         {
           anio: 2023,
           cuatrim: 'verano',
           fechaActual: new Date(2027, 2), // Marzo 2027 → aún vigente
-          esperado: { vencida: false }
+          esperado: { vencida: false, vencimiento: 'Febrero/Marzo de 2027', complementaria: 'Abril de 2027' }
         },
         {
           anio: 2023,
           cuatrim: 'verano',
-          fechaActual: new Date(2027, 3), // Abril 2027 → vencida
-          esperado: { vencida: true }
+          fechaActual: new Date(2027, 4), // Mayo 2027 → vencida
+          esperado: { vencida: true, vencimiento: 'Febrero/Marzo de 2027', complementaria: 'Abril de 2027' }
         }
       ];
 
